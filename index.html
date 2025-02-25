@@ -1,651 +1,569 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Research Conceptual Model Builder</title>
-    <!-- Materialize CSS -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
-    />
-    <!-- Material Icons -->
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
-    <style>
-      body {
-        background-color: #f5f5f5;
-        font-family: "Roboto", sans-serif;
-      }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research Conceptual Model Builder</title>
+  <!-- Materialize CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f5f5f5;
+      font-family: 'Roboto', sans-serif;
+    }
+    
+    #canvas-container {
+      background-color: white;
+      border-radius: 6px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin: 20px 0;
+      overflow: hidden;
+      position: relative;
+      height: 70vh;
+    }
+    
+    #canvas {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    
+    .variable {
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: move;
+      min-width: 120px;
+      max-width: 200px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      position: absolute;
+      z-index: 1;
+      user-select: none;
+    }
+    
+    .variable h6 {
+      margin: 0;
+      word-break: break-word;
+      font-weight: 500;
+      color: rgba(0,0,0,0.87);
+    }
+    
+    .variable .badge {
+      margin-top: 8px;
+      display: block;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+    }
+    
+    .variable .close-btn {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      text-align: center;
+      line-height: 24px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: none;
+      color: #333; /* Fixed color for the X symbol */
+      font-weight: bold;
+    }
+    
+    .variable:hover .close-btn {
+      display: block;
+    }
+    
+    .connector-line {
+      position: absolute;
+      background-color: #333;
+      height: 2px;
+      transform-origin: 0 0;
+      z-index: 0;
+    }
+    
+    .arrow-head {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      z-index: 0;
+    }
+    
+    .color-preview {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    
+    .toolbar {
+      padding: 15px;
+      background-color: white;
+      border-radius: 6px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .connection-mode {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 100;
+    }
+    
+    #trash-zone {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0;
+      background: rgba(244, 67, 54, 0.1);
+      text-align: center;
+      overflow: hidden;
+      transition: height 0.3s;
+      z-index: 99;
+    }
+    
+    #trash-zone.visible {
+      height: 80px;
+    }
+    
+    #trash-zone i {
+      margin-top: 20px;
+      color: #f44336;
+      font-size: 32px;
+    }
+    
+    .legend {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-right: 15px;
+    }
+    
+    .zoom-controls {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 10;
+    }
+    
+    .minimized {
+      width: 40px !important;
+      height: 40px !important;
+      overflow: hidden;
+      border-radius: 50% !important;
+      padding: 0 !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .minimized h6, .minimized .badge {
+      display: none;
+    }
+    
+    .tooltip {
+      position: absolute;
+      background: rgba(97, 97, 97, 0.9);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      z-index: 100;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    
+    /* Moderator Strength Editor */
+    .strength-editor {
+      position: absolute;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      z-index: 100;
+      width: 280px;
+    }
+    
+    .strength-editor-title {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .strength-editor-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 15px;
+    }
 
-      #canvas-container {
-        background-color: white;
-        border-radius: 6px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        margin: 20px 0;
-        overflow: hidden;
-        position: relative;
-        height: 70vh;
-      }
-
-      #canvas {
-        width: 100%;
-        height: 100%;
-        position: relative;
-      }
-
-      .variable {
-        padding: 10px 15px;
-        border-radius: 6px;
-        cursor: move;
-        min-width: 120px;
-        max-width: 200px;
-        text-align: center;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        position: absolute;
-        z-index: 1;
-        user-select: none;
-      }
-
-      .variable h6 {
-        margin: 0;
-        word-break: break-word;
-        font-weight: 500;
-        color: rgba(0, 0, 0, 0.87);
-      }
-
-      .variable .badge {
-        margin-top: 8px;
-        display: block;
-        font-size: 11px;
-        padding: 3px 8px;
-        border-radius: 12px;
-      }
-
-      .variable .close-btn {
-        position: absolute;
-        top: -10px;
-        right: -10px;
-        background: white;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        text-align: center;
-        line-height: 24px;
-        cursor: pointer;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        display: none;
-        color: #333; /* Fixed color for the X symbol */
-        font-weight: bold;
-      }
-
-      .variable:hover .close-btn {
-        display: block;
-      }
-
-      .connector-line {
-        position: absolute;
-        background-color: #333;
-        height: 2px;
-        transform-origin: 0 0;
-        z-index: 0;
-      }
-
-      .arrow-head {
-        position: absolute;
-        width: 0;
-        height: 0;
-        border-style: solid;
-        z-index: 0;
-      }
-
-      .color-preview {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        margin-right: 5px;
-        vertical-align: middle;
-      }
-
-      .toolbar {
-        padding: 15px;
-        background-color: white;
-        border-radius: 6px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-      }
-
-      .connection-mode {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 100;
-      }
-
-      #trash-zone {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 0;
-        background: rgba(244, 67, 54, 0.1);
-        text-align: center;
-        overflow: hidden;
-        transition: height 0.3s;
-        z-index: 99;
-      }
-
-      #trash-zone.visible {
-        height: 80px;
-      }
-
-      #trash-zone i {
-        margin-top: 20px;
-        color: #f44336;
-        font-size: 32px;
-      }
-
-      .legend {
-        margin-top: 15px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-      }
-
-      .legend-item {
-        display: flex;
-        align-items: center;
-        margin-right: 15px;
-      }
-
-      .zoom-controls {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        z-index: 10;
-      }
-
-      .minimized {
-        width: 40px !important;
-        height: 40px !important;
-        overflow: hidden;
-        border-radius: 50% !important;
-        padding: 0 !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .minimized h6,
-      .minimized .badge {
-        display: none;
-      }
-
-      .tooltip {
-        position: absolute;
-        background: rgba(97, 97, 97, 0.9);
-        color: white;
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        z-index: 100;
-        pointer-events: none;
-        white-space: nowrap;
-      }
-
-      /* Moderator Strength Editor */
-      .strength-editor {
-        position: absolute;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
-        padding: 15px;
-        z-index: 100;
-        width: 280px;
-      }
-
-      .strength-editor-title {
-        margin: 0 0 10px 0;
-        font-size: 14px;
-        font-weight: 500;
-      }
-
-      .strength-editor-footer {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 15px;
-      }
-
-      /* New styles for strength indicator */
-      .strength-container {
-        display: none;
-        margin-top: 15px;
-        align-items: center;
-      }
-
-      .strength-value {
-        margin-left: 10px;
-        min-width: 30px;
-        text-align: center;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
+    /* New styles for strength indicator */
+    .strength-container {
+      display: none;
+      margin-top: 15px;
+      align-items: center;
+    }
+    
+    .strength-value {
+      margin-left: 10px;
+      min-width: 30px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col s12">
+        <h4 class="center-align">Research Conceptual Model Builder</h4>
+        <p class="center-align grey-text">Add variables, create connections, and build your research model</p>
+      </div>
+    </div>
+    
+    <!-- Toolbar Section -->
+    <div class="toolbar">
       <div class="row">
-        <div class="col s12">
-          <h4 class="center-align">Research Conceptual Model Builder</h4>
-          <p class="center-align grey-text">
-            Add variables, create connections, and build your research model
-          </p>
+        <div class="input-field col s5">
+          <input id="variable-name" type="text" class="validate">
+          <label for="variable-name">Variable Name</label>
         </div>
-      </div>
-
-      <!-- Toolbar Section -->
-      <div class="toolbar">
-        <div class="row">
-          <div class="input-field col s5">
-            <input id="variable-name" type="text" class="validate" />
-            <label for="variable-name">Variable Name</label>
-          </div>
-
-          <div class="input-field col s3">
-            <select id="variable-type">
-              <option value="" disabled selected>Choose type</option>
-              <option value="independent" data-color="#26a69a">
-                Independent
-              </option>
-              <option value="dependent" data-color="#ef5350">Dependent</option>
-              <option value="moderator" data-color="#7e57c2">Moderator</option>
-              <option value="control" data-color="#78909c">Control</option>
-              <option value="custom" data-color="#8bc34a">Custom</option>
-            </select>
-            <label>Variable Type</label>
-          </div>
-
-          <div class="input-field col s2">
-            <input
-              id="custom-color"
-              type="color"
-              class="validate"
-              value="#8bc34a"
-              disabled
-            />
-            <label for="custom-color" class="active">Color</label>
-          </div>
-
-          <div class="col s2">
-            <button
-              id="add-variable-btn"
-              class="btn waves-effect waves-light"
-              style="margin-top: 20px"
-            >
-              Add
-              <i class="material-icons right">add</i>
-            </button>
-          </div>
+        
+        <div class="input-field col s3">
+          <select id="variable-type">
+            <option value="" disabled selected>Choose type</option>
+            <option value="independent" data-color="#26a69a">Independent</option>
+            <option value="dependent" data-color="#ef5350">Dependent</option>
+            <option value="moderator" data-color="#7e57c2">Moderator</option>
+            <option value="control" data-color="#78909c">Control</option>
+            <option value="custom" data-color="#8bc34a">Custom</option>
+          </select>
+          <label>Variable Type</label>
         </div>
-
-        <!-- Strength Slider (for Moderator type) -->
-        <div id="strength-container" class="strength-container">
-          <label>Moderator Strength (0 = Mediator): </label>
-          <div class="range-field" style="flex-grow: 1; margin: 0 10px">
-            <input
-              type="range"
-              id="moderator-strength"
-              min="0"
-              max="100"
-              value="50"
-            />
-          </div>
-          <div class="strength-value" id="strength-value">50</div>
+        
+        <div class="input-field col s2">
+          <input id="custom-color" type="color" class="validate" value="#8bc34a" disabled>
+          <label for="custom-color" class="active">Color</label>
         </div>
-
-        <!-- Legend -->
-        <div class="legend">
-          <div class="legend-item">
-            <span
-              class="color-preview"
-              style="background-color: #26a69a"
-            ></span>
-            <span>Independent</span>
-          </div>
-          <div class="legend-item">
-            <span
-              class="color-preview"
-              style="background-color: #ef5350"
-            ></span>
-            <span>Dependent</span>
-          </div>
-          <div class="legend-item">
-            <span
-              class="color-preview"
-              style="background-color: #7e57c2"
-            ></span>
-            <span>Moderator</span>
-          </div>
-          <div class="legend-item">
-            <span
-              class="color-preview"
-              style="background-color: #7e57c2; opacity: 0.6"
-            ></span>
-            <span>Mediator (Moderator with 0 strength)</span>
-          </div>
-          <div class="legend-item">
-            <span
-              class="color-preview"
-              style="background-color: #78909c"
-            ></span>
-            <span>Control</span>
-          </div>
-          <div class="legend-item">
-            <span
-              class="color-preview"
-              style="background-color: #8bc34a"
-            ></span>
-            <span>Custom</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Canvas Container -->
-      <div id="canvas-container">
-        <div id="canvas"></div>
-
-        <div class="zoom-controls">
-          <button
-            id="zoom-in-btn"
-            class="btn-floating btn-small waves-effect waves-light grey"
-          >
-            <i class="material-icons">add</i>
-          </button>
-          <button
-            id="zoom-out-btn"
-            class="btn-floating btn-small waves-effect waves-light grey"
-          >
-            <i class="material-icons">remove</i>
-          </button>
-          <button
-            id="zoom-reset-btn"
-            class="btn-floating btn-small waves-effect waves-light grey"
-          >
-            <i class="material-icons">aspect_ratio</i>
+        
+        <div class="col s2">
+          <button id="add-variable-btn" class="btn waves-effect waves-light" style="margin-top: 20px">
+            Add
+            <i class="material-icons right">add</i>
           </button>
         </div>
       </div>
-
-      <!-- Connection Mode Button -->
-      <div class="connection-mode">
-        <button
-          id="toggle-connect-mode"
-          class="btn-floating btn-large waves-effect waves-light blue tooltipped"
-          data-position="left"
-          data-tooltip="Toggle Connection Mode"
-        >
-          <i class="material-icons">swap_horiz</i>
+      
+      <!-- Strength Slider (for Moderator type) -->
+      <div id="strength-container" class="strength-container">
+        <label>Moderator Strength (0 = Mediator): </label>
+        <div class="range-field" style="flex-grow: 1; margin: 0 10px;">
+          <input type="range" id="moderator-strength" min="0" max="100" value="50" />
+        </div>
+        <div class="strength-value" id="strength-value">50</div>
+      </div>
+      
+      <!-- Legend -->
+      <div class="legend">
+        <div class="legend-item">
+          <span class="color-preview" style="background-color: #26a69a;"></span>
+          <span>Independent</span>
+        </div>
+        <div class="legend-item">
+          <span class="color-preview" style="background-color: #ef5350;"></span>
+          <span>Dependent</span>
+        </div>
+        <div class="legend-item">
+          <span class="color-preview" style="background-color: #7e57c2;"></span>
+          <span>Moderator</span>
+        </div>
+        <div class="legend-item">
+          <span class="color-preview" style="background-color: #7e57c2; opacity: 0.6;"></span>
+          <span>Mediator (Moderator with 0 strength)</span>
+        </div>
+        <div class="legend-item">
+          <span class="color-preview" style="background-color: #78909c;"></span>
+          <span>Control</span>
+        </div>
+        <div class="legend-item">
+          <span class="color-preview" style="background-color: #8bc34a;"></span>
+          <span>Custom</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Canvas Container -->
+    <div id="canvas-container">
+      <div id="canvas"></div>
+      
+      <div class="zoom-controls">
+        <button id="zoom-in-btn" class="btn-floating btn-small waves-effect waves-light grey">
+          <i class="material-icons">add</i>
+        </button>
+        <button id="zoom-out-btn" class="btn-floating btn-small waves-effect waves-light grey">
+          <i class="material-icons">remove</i>
+        </button>
+        <button id="zoom-reset-btn" class="btn-floating btn-small waves-effect waves-light grey">
+          <i class="material-icons">aspect_ratio</i>
         </button>
       </div>
-
-      <!-- Project Actions -->
-      <div class="row">
-        <div class="col s12 center-align">
-          <button
-            id="clear-canvas-btn"
-            class="btn red lighten-2 waves-effect waves-light"
-          >
-            Clear Canvas
-            <i class="material-icons right">delete</i>
-          </button>
-          <button id="save-btn" class="btn waves-effect waves-light">
-            Save Model
-            <i class="material-icons right">save</i>
-          </button>
-          <button id="load-btn" class="btn waves-effect waves-light">
-            Load Model
-            <i class="material-icons right">folder_open</i>
-          </button>
-          <button id="export-btn" class="btn waves-effect waves-light">
-            Export as PNG
-            <i class="material-icons right">image</i>
-          </button>
-        </div>
+    </div>
+    
+    <!-- Connection Mode Button -->
+    <div class="connection-mode">
+      <button id="toggle-connect-mode" class="btn-floating btn-large waves-effect waves-light blue tooltipped" data-position="left" data-tooltip="Toggle Connection Mode">
+        <i class="material-icons">swap_horiz</i>
+      </button>
+      <button id="github-btn" class="btn-floating btn-large waves-effect waves-light grey darken-3 tooltipped" style="margin-top: 10px;" data-position="left" data-tooltip="View Documentation">
+        <i class="material-icons">help_outline</i>
+      </button>
+    </div>
+    
+    <!-- Project Actions -->
+    <div class="row">
+      <div class="col s12 center-align">
+        <button id="clear-canvas-btn" class="btn red lighten-2 waves-effect waves-light">
+          Clear Canvas
+          <i class="material-icons right">delete</i>
+        </button>
+        <button id="save-btn" class="btn waves-effect waves-light">
+          Save Model
+          <i class="material-icons right">save</i>
+        </button>
+        <button id="load-btn" class="btn waves-effect waves-light">
+          Load Model
+          <i class="material-icons right">folder_open</i>
+        </button>
+        <button id="export-btn" class="btn waves-effect waves-light">
+          Export as PNG
+          <i class="material-icons right">image</i>
+        </button>
       </div>
     </div>
-
-    <!-- Trash Zone -->
-    <div id="trash-zone">
-      <i class="material-icons">delete</i>
-      <p>Drop here to delete</p>
-    </div>
-
-    <!-- Hidden file input for loading -->
-    <input type="file" id="load-input" style="display: none" accept=".json" />
-
-    <!-- Materialize JS and JQuery -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        // Initialize Materialize components
-        M.AutoInit();
-
-        // Get references to elements
-        const canvas = document.getElementById("canvas");
-        const variableNameInput = document.getElementById("variable-name");
-        const variableTypeSelect = document.getElementById("variable-type");
-        const customColorInput = document.getElementById("custom-color");
-        const addVariableBtn = document.getElementById("add-variable-btn");
-        const toggleConnectModeBtn = document.getElementById(
-          "toggle-connect-mode"
-        );
-        const clearCanvasBtn = document.getElementById("clear-canvas-btn");
-        const saveBtn = document.getElementById("save-btn");
-        const loadBtn = document.getElementById("load-btn");
-        const loadInput = document.getElementById("load-input");
-        const exportBtn = document.getElementById("export-btn");
-        const trashZone = document.getElementById("trash-zone");
-        const zoomInBtn = document.getElementById("zoom-in-btn");
-        const zoomOutBtn = document.getElementById("zoom-out-btn");
-        const zoomResetBtn = document.getElementById("zoom-reset-btn");
-        const strengthContainer = document.getElementById("strength-container");
-        const moderatorStrength = document.getElementById("moderator-strength");
-        const strengthValue = document.getElementById("strength-value");
-
-        // State variables
-        let variables = [];
-        let connections = [];
-        let connectionMode = false;
-        let selectedVariable = null;
-        let draggingVariable = null;
-        let offsetX, offsetY;
-        let isDragging = false;
-        let scale = 1;
-        let tooltip = null;
-
-        // Variable type colors
-        const typeColors = {
-          independent: "#26a69a",
-          dependent: "#ef5350",
-          moderator: "#7e57c2",
-          control: "#78909c",
-          custom: "#8bc34a",
-        };
-
-        // Show strength slider when moderator is selected
-        variableTypeSelect.addEventListener("change", function () {
-          const selectedOption = this.options[this.selectedIndex];
-
-          if (selectedOption.value === "custom") {
-            customColorInput.disabled = false;
-            strengthContainer.style.display = "none";
+  </div>
+  
+  <!-- Trash Zone -->
+  <div id="trash-zone">
+    <i class="material-icons">delete</i>
+    <p>Drop here to delete</p>
+  </div>
+  
+  <!-- Hidden file input for loading -->
+  <input type="file" id="load-input" style="display: none;" accept=".json">
+  
+  <!-- Materialize JS and JQuery -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize Materialize components
+      M.AutoInit();
+      
+      // Get references to elements
+      const canvas = document.getElementById('canvas');
+      const variableNameInput = document.getElementById('variable-name');
+      const variableTypeSelect = document.getElementById('variable-type');
+      const customColorInput = document.getElementById('custom-color');
+      const addVariableBtn = document.getElementById('add-variable-btn');
+      const toggleConnectModeBtn = document.getElementById('toggle-connect-mode');
+      const clearCanvasBtn = document.getElementById('clear-canvas-btn');
+      const saveBtn = document.getElementById('save-btn');
+      const loadBtn = document.getElementById('load-btn');
+      const loadInput = document.getElementById('load-input');
+      const exportBtn = document.getElementById('export-btn');
+      const trashZone = document.getElementById('trash-zone');
+      const zoomInBtn = document.getElementById('zoom-in-btn');
+      const zoomOutBtn = document.getElementById('zoom-out-btn');
+      const zoomResetBtn = document.getElementById('zoom-reset-btn');
+      const strengthContainer = document.getElementById('strength-container');
+      const moderatorStrength = document.getElementById('moderator-strength');
+      const strengthValue = document.getElementById('strength-value');
+      
+      // State variables
+      let variables = [];
+      let connections = [];
+      let connectionMode = false;
+      let selectedVariable = null;
+      let draggingVariable = null;
+      let offsetX, offsetY;
+      let isDragging = false;
+      let scale = 1;
+      let tooltip = null;
+      
+      // Variable type colors
+      const typeColors = {
+        'independent': '#26a69a',
+        'dependent': '#ef5350',
+        'moderator': '#7e57c2',
+        'control': '#78909c',
+        'custom': '#8bc34a'
+      };
+      
+      // Show strength slider when moderator is selected
+      variableTypeSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        
+        if (selectedOption.value === 'custom') {
+          customColorInput.disabled = false;
+          strengthContainer.style.display = 'none';
+        } else {
+          customColorInput.disabled = true;
+          if (selectedOption.dataset.color) {
+            customColorInput.value = selectedOption.dataset.color;
+          }
+          
+          // Show strength slider only for moderator type
+          if (selectedOption.value === 'moderator') {
+            strengthContainer.style.display = 'flex';
           } else {
-            customColorInput.disabled = true;
-            if (selectedOption.dataset.color) {
-              customColorInput.value = selectedOption.dataset.color;
-            }
-
-            // Show strength slider only for moderator type
-            if (selectedOption.value === "moderator") {
-              strengthContainer.style.display = "flex";
-            } else {
-              strengthContainer.style.display = "none";
-            }
+            strengthContainer.style.display = 'none';
           }
-        });
-
-        // Update strength value display
-        moderatorStrength.addEventListener("input", function () {
-          strengthValue.textContent = this.value;
-        });
-
-        // Add variable button click handler
-        addVariableBtn.addEventListener("click", function () {
-          const name = variableNameInput.value.trim();
-          if (!name) {
-            M.toast({ html: "Please enter a variable name" });
-            return;
+        }
+      });
+      
+      // Update strength value display
+      moderatorStrength.addEventListener('input', function() {
+        strengthValue.textContent = this.value;
+      });
+      
+      // Add variable button click handler
+      addVariableBtn.addEventListener('click', function() {
+        const name = variableNameInput.value.trim();
+        if (!name) {
+          M.toast({html: 'Please enter a variable name'});
+          return;
+        }
+        
+        const type = variableTypeSelect.value;
+        if (!type) {
+          M.toast({html: 'Please select a variable type'});
+          return;
+        }
+        
+        const color = type === 'custom' ? customColorInput.value : typeColors[type];
+        
+        // Get strength value if it's a moderator
+        const strength = type === 'moderator' ? parseInt(moderatorStrength.value) : null;
+        
+        addVariable(name, type, color, strength);
+        
+        // Clear inputs
+        variableNameInput.value = '';
+        variableNameInput.focus();
+      });
+      
+      // Add variable function
+      function addVariable(name, type, color, strength = null) {
+        const id = 'var-' + Date.now();
+        const variableEl = document.createElement('div');
+        variableEl.className = 'variable';
+        variableEl.id = id;
+        variableEl.dataset.type = type;
+        
+        // Apply opacity based on strength for moderator type
+        if (type === 'moderator') {
+          variableEl.dataset.strength = strength;
+          
+          // If strength is 0, it's a mediator (use lower opacity)
+          if (strength === 0) {
+            variableEl.style.opacity = '0.6';
           }
-
-          const type = variableTypeSelect.value;
-          if (!type) {
-            M.toast({ html: "Please select a variable type" });
-            return;
-          }
-
-          const color =
-            type === "custom" ? customColorInput.value : typeColors[type];
-
-          // Get strength value if it's a moderator
-          const strength =
-            type === "moderator" ? parseInt(moderatorStrength.value) : null;
-
-          addVariable(name, type, color, strength);
-
-          // Clear inputs
-          variableNameInput.value = "";
-          variableNameInput.focus();
-        });
-
-        // Add variable function
-        function addVariable(name, type, color, strength = null) {
-          const id = "var-" + Date.now();
-          const variableEl = document.createElement("div");
-          variableEl.className = "variable";
-          variableEl.id = id;
-          variableEl.dataset.type = type;
-
-          // Apply opacity based on strength for moderator type
-          if (type === "moderator") {
-            variableEl.dataset.strength = strength;
-
-            // If strength is 0, it's a mediator (use lower opacity)
-            if (strength === 0) {
-              variableEl.style.opacity = "0.6";
-            }
-          }
-
-          variableEl.style.backgroundColor = color;
-          variableEl.style.color = getContrastColor(color);
-          variableEl.style.left =
-            Math.floor(Math.random() * (canvas.clientWidth - 200) + 50) + "px";
-          variableEl.style.top =
-            Math.floor(Math.random() * (canvas.clientHeight - 200) + 50) + "px";
-
-          // Determine the display type label
-          let displayType = type;
-          if (type === "moderator" && strength === 0) {
-            displayType = "mediator";
-          }
-
-          // Create the variable element content
-          variableEl.innerHTML = `
+        }
+        
+        variableEl.style.backgroundColor = color;
+        variableEl.style.color = getContrastColor(color);
+        variableEl.style.left = Math.floor(Math.random() * (canvas.clientWidth - 200) + 50) + 'px';
+        variableEl.style.top = Math.floor(Math.random() * (canvas.clientHeight - 200) + 50) + 'px';
+        
+        // Determine the display type label
+        let displayType = type;
+        if (type === 'moderator' && strength === 0) {
+          displayType = 'mediator';
+        }
+        
+        // Create the variable element content
+        variableEl.innerHTML = `
           <h6>${name}</h6>
-          <span class="badge" style="background-color: ${adjustColor(
-            color,
-            -20
-          )}; color: ${getContrastColor(color)};">
-            ${displayType}${
-            type === "moderator" && strength !== null
-              ? " (" + strength + ")"
-              : ""
-          }
+          <span class="badge" style="background-color: ${adjustColor(color, -20)}; color: ${getContrastColor(color)};">
+            ${displayType}${type === 'moderator' && strength !== null ? ' (' + strength + ')' : ''}
           </span>
           <div class="close-btn" data-id="${id}">×</div>
         `;
-
-          canvas.appendChild(variableEl);
-
-          // Add to variables array
-          variables.push({
-            id,
-            name,
-            type,
-            color,
-            strength,
-            element: variableEl,
-          });
-
-          // Add event listeners for the variable element
-          setupVariableEvents(variableEl);
-
-          return variableEl;
+        
+        canvas.appendChild(variableEl);
+        
+        // Add to variables array
+        variables.push({
+          id,
+          name,
+          type,
+          color,
+          strength,
+          element: variableEl
+        });
+        
+        // Add event listeners for the variable element
+        setupVariableEvents(variableEl);
+        
+        return variableEl;
+      }
+      
+      // Setup events for variable elements
+      function setupVariableEvents(variableEl) {
+        variableEl.addEventListener('mousedown', handleVariableMouseDown);
+        variableEl.addEventListener('touchstart', handleVariableTouchStart, { passive: false });
+        variableEl.addEventListener('dblclick', handleVariableDblClick);
+        
+        const closeBtn = variableEl.querySelector('.close-btn');
+        closeBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const varId = this.dataset.id;
+          removeVariable(varId);
+        });
+      }
+      
+      // Handle mouse down on variable
+      function handleVariableMouseDown(e) {
+        if (connectionMode) {
+          // Don't do anything on mousedown in connection mode
+          // The canvas click handler will handle connections
+          return;
+        } else {
+          handleDragStart(e);
         }
-
-        // Setup events for variable elements
-        function setupVariableEvents(variableEl) {
-          variableEl.addEventListener("mousedown", handleVariableMouseDown);
-          variableEl.addEventListener("touchstart", handleVariableTouchStart, {
-            passive: false,
-          });
-          variableEl.addEventListener("dblclick", handleVariableDblClick);
-
-          const closeBtn = variableEl.querySelector(".close-btn");
-          closeBtn.addEventListener("click", function (e) {
-            e.stopPropagation();
-            const varId = this.dataset.id;
-            removeVariable(varId);
-          });
+      }
+      
+      // Handle touch start on variable
+      function handleVariableTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        if (connectionMode) {
+          handleConnectionStart({ target: e.target, clientX: touch.clientX, clientY: touch.clientY });
+        } else {
+          handleDragStart({ target: e.target, clientX: touch.clientX, clientY: touch.clientY });
         }
-
-        // Handle mouse down on variable
-        function handleVariableMouseDown(e) {
-          if (connectionMode) {
-            // Don't do anything on mousedown in connection mode
-            // The canvas click handler will handle connections
-            return;
-          } else {
-            handleDragStart(e);
-          }
-        }
-
-        // Handle touch start on variable
-        function handleVariableTouchStart(e) {
-          e.preventDefault();
-          const touch = e.touches[0];
-          if (connectionMode) {
-            handleConnectionStart({
-              target: e.target,
-              clientX: touch.clientX,
-              clientY: touch.clientY,
-            });
-          } else {
-            handleDragStart({
-              target: e.target,
-              clientX: touch.clientX,
-              clientY: touch.clientY,
-            });
-          }
-        }
-
-        // Add strength editor to the DOM
-        const strengthEditor = document.createElement("div");
-        strengthEditor.className = "strength-editor";
-        strengthEditor.style.display = "none";
-        strengthEditor.innerHTML = `
+      }
+      
+      // Add strength editor to the DOM
+      const strengthEditor = document.createElement('div');
+      strengthEditor.className = 'strength-editor';
+      strengthEditor.style.display = 'none';
+      strengthEditor.innerHTML = `
         <h5 class="strength-editor-title">Adjust Moderator Strength</h5>
         <p class="grey-text" style="margin-top: 0; font-size: 12px;">When strength is 0, this acts as a mediator</p>
         <div class="range-field">
@@ -659,746 +577,663 @@
           <button id="apply-strength-btn" class="btn waves-effect waves-light">Apply</button>
         </div>
       `;
-        document.body.appendChild(strengthEditor);
-
-        // Get references to strength editor elements
-        const editModeratorStrength = document.getElementById(
-          "edit-moderator-strength"
-        );
-        const editStrengthValue = document.getElementById(
-          "edit-strength-value"
-        );
-        const applyStrengthBtn = document.getElementById("apply-strength-btn");
-        const cancelStrengthBtn = document.getElementById(
-          "cancel-strength-btn"
-        );
-
-        // Update strength value display in editor
-        editModeratorStrength.addEventListener("input", function () {
-          editStrengthValue.textContent = this.value;
-        });
-
-        // Store the variable being edited
-        let editingVariable = null;
-
-        // Close strength editor
-        function closeStrengthEditor() {
-          strengthEditor.style.display = "none";
-          editingVariable = null;
-        }
-
-        // Apply strength button handler
-        applyStrengthBtn.addEventListener("click", function () {
-          if (!editingVariable) return;
-
-          const newStrength = parseInt(editModeratorStrength.value);
-          const variable = variables.find((v) => v.id === editingVariable.id);
-
-          if (variable) {
-            // Update variable data
-            variable.strength = newStrength;
-            editingVariable.dataset.strength = newStrength;
-
-            // Update appearance
-            if (newStrength === 0) {
-              editingVariable.style.opacity = "0.6";
-            } else {
-              editingVariable.style.opacity = "1";
-            }
-
-            // Update label text
-            const badge = editingVariable.querySelector(".badge");
-            const displayType =
-              newStrength === 0 ? "mediator" : `moderator (${newStrength})`;
-            badge.textContent = displayType;
+      document.body.appendChild(strengthEditor);
+      
+      // Get references to strength editor elements
+      const editModeratorStrength = document.getElementById('edit-moderator-strength');
+      const editStrengthValue = document.getElementById('edit-strength-value');
+      const applyStrengthBtn = document.getElementById('apply-strength-btn');
+      const cancelStrengthBtn = document.getElementById('cancel-strength-btn');
+      
+      // Update strength value display in editor
+      editModeratorStrength.addEventListener('input', function() {
+        editStrengthValue.textContent = this.value;
+      });
+      
+      // Store the variable being edited
+      let editingVariable = null;
+      
+      // Close strength editor
+      function closeStrengthEditor() {
+        strengthEditor.style.display = 'none';
+        editingVariable = null;
+      }
+      
+      // Apply strength button handler
+      applyStrengthBtn.addEventListener('click', function() {
+        if (!editingVariable) return;
+        
+        const newStrength = parseInt(editModeratorStrength.value);
+        const variable = variables.find(v => v.id === editingVariable.id);
+        
+        if (variable) {
+          // Update variable data
+          variable.strength = newStrength;
+          editingVariable.dataset.strength = newStrength;
+          
+          // Update appearance
+          if (newStrength === 0) {
+            editingVariable.style.opacity = '0.6';
+          } else {
+            editingVariable.style.opacity = '1';
           }
-
-          closeStrengthEditor();
-        });
-
-        // Cancel button handler
-        cancelStrengthBtn.addEventListener("click", closeStrengthEditor);
-
-        // Handle double click on variable
-        function handleVariableDblClick(e) {
-          const varElement = e.target.closest(".variable");
-          if (!varElement) return;
-
-          const varId = varElement.id;
-          const variable = variables.find((v) => v.id === varId);
-
-          if (variable) {
-            // Check if it's a moderator - if so, show strength editor
-            if (variable.type === "moderator") {
-              // Position the editor near the variable
-              const rect = varElement.getBoundingClientRect();
-              strengthEditor.style.left = rect.left + "px";
-              strengthEditor.style.top = rect.bottom + 10 + "px";
-
-              // Set current strength value
-              editModeratorStrength.value =
-                variable.strength !== null ? variable.strength : 50;
-              editStrengthValue.textContent = editModeratorStrength.value;
-
-              // Show the editor
-              strengthEditor.style.display = "block";
-              editingVariable = varElement;
+          
+          // Update label text
+          const badge = editingVariable.querySelector('.badge');
+          const displayType = newStrength === 0 ? 'mediator' : `moderator (${newStrength})`;
+          badge.textContent = displayType;
+        }
+        
+        closeStrengthEditor();
+      });
+      
+      // Cancel button handler
+      cancelStrengthBtn.addEventListener('click', closeStrengthEditor);
+      
+      // Handle double click on variable
+      function handleVariableDblClick(e) {
+        const varElement = e.target.closest('.variable');
+        if (!varElement) return;
+        
+        const varId = varElement.id;
+        const variable = variables.find(v => v.id === varId);
+        
+        if (variable) {
+          // Check if it's a moderator - if so, show strength editor
+          if (variable.type === 'moderator') {
+            // Position the editor near the variable
+            const rect = varElement.getBoundingClientRect();
+            strengthEditor.style.left = rect.left + 'px';
+            strengthEditor.style.top = (rect.bottom + 10) + 'px';
+            
+            // Set current strength value
+            editModeratorStrength.value = variable.strength !== null ? variable.strength : 50;
+            editStrengthValue.textContent = editModeratorStrength.value;
+            
+            // Show the editor
+            strengthEditor.style.display = 'block';
+            editingVariable = varElement;
+          } else {
+            // Toggle minimized state for non-moderator variables
+            if (varElement.classList.contains('minimized')) {
+              varElement.classList.remove('minimized');
             } else {
-              // Toggle minimized state for non-moderator variables
-              if (varElement.classList.contains("minimized")) {
-                varElement.classList.remove("minimized");
-              } else {
-                varElement.classList.add("minimized");
-              }
-
-              // Redraw connections
-              updateConnections();
+              varElement.classList.add('minimized');
             }
+            
+            // Redraw connections
+            updateConnections();
           }
         }
-
-        // Handle connection start
-        function handleConnectionStart(e) {
-          // This function is no longer needed since we handle connections directly in the canvas click event
-          // But we keep it for compatibility
+      }
+      
+      // Handle connection start
+      function handleConnectionStart(e) {
+        // This function is no longer needed since we handle connections directly in the canvas click event
+        // But we keep it for compatibility
+        return;
+      }
+      
+      // Handle drag start
+      function handleDragStart(e) {
+        const varElement = e.target.closest('.variable');
+        if (!varElement) return;
+        
+        draggingVariable = varElement;
+        isDragging = true;
+        
+        // Calculate offset
+        const rect = varElement.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        
+        // Show trash zone
+        trashZone.classList.add('visible');
+        
+        // Add event listeners for drag
+        document.addEventListener('mousemove', handleDrag);
+        document.addEventListener('touchmove', handleTouchDrag, { passive: false });
+        document.addEventListener('mouseup', handleDragEnd);
+        document.addEventListener('touchend', handleDragEnd);
+      }
+      
+      // Handle drag
+      function handleDrag(e) {
+        if (!isDragging || !draggingVariable) return;
+        
+        const canvasRect = canvas.getBoundingClientRect();
+        let x = (e.clientX - canvasRect.left - offsetX) / scale;
+        let y = (e.clientY - canvasRect.top - offsetY) / scale;
+        
+        // Keep variable within canvas
+        x = Math.max(0, Math.min(canvas.clientWidth / scale - draggingVariable.offsetWidth, x));
+        y = Math.max(0, Math.min(canvas.clientHeight / scale - draggingVariable.offsetHeight, y));
+        
+        draggingVariable.style.left = x + 'px';
+        draggingVariable.style.top = y + 'px';
+        
+        // Update connections
+        updateConnections();
+        
+        // Check if over trash zone
+        const trashRect = trashZone.getBoundingClientRect();
+        if (e.clientY > trashRect.top) {
+          trashZone.style.backgroundColor = 'rgba(244, 67, 54, 0.2)';
+        } else {
+          trashZone.style.backgroundColor = 'rgba(244, 67, 54, 0.1)';
+        }
+      }
+      
+      // Handle touch drag
+      function handleTouchDrag(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        handleDrag({ clientX: touch.clientX, clientY: touch.clientY });
+      }
+      
+      // Handle drag end
+      function handleDragEnd(e) {
+        if (isDragging && draggingVariable) {
+          // Check if dropped on trash zone
+          if (e.type !== 'touchend') {
+            const trashRect = trashZone.getBoundingClientRect();
+            if (e.clientY > trashRect.top) {
+              removeVariable(draggingVariable.id);
+            }
+          }
+        }
+        
+        isDragging = false;
+        draggingVariable = null;
+        
+        // Hide trash zone
+        trashZone.classList.remove('visible');
+        trashZone.style.backgroundColor = 'rgba(244, 67, 54, 0.1)';
+        
+        // Remove event listeners
+        document.removeEventListener('mousemove', handleDrag);
+        document.removeEventListener('touchmove', handleTouchDrag);
+        document.removeEventListener('mouseup', handleDragEnd);
+        document.removeEventListener('touchend', handleDragEnd);
+      }
+      
+      // Add click event to canvas for connection mode
+      canvas.addEventListener('click', function(e) {
+        if (!connectionMode) return;
+        
+        const varElement = e.target.closest('.variable');
+        
+        if (varElement) {
+          if (!selectedVariable) {
+            // First variable click
+            selectedVariable = varElement;
+            selectedVariable.classList.add('pulse');
+            console.log('First variable selected:', selectedVariable.id);
+          } else if (varElement !== selectedVariable) {
+            // Second variable click - create connection
+            console.log('Creating connection:', selectedVariable.id, 'to', varElement.id);
+            createConnection(selectedVariable.id, varElement.id);
+            
+            // Reset selected variable
+            selectedVariable.classList.remove('pulse');
+            selectedVariable = null;
+          }
+        }
+      });
+      
+      // Create connection between two variables
+      function createConnection(sourceId, targetId) {
+        // Check if connection already exists
+        const exists = connections.some(conn => 
+          (conn.source === sourceId && conn.target === targetId) || 
+          (conn.source === targetId && conn.target === sourceId)
+        );
+        
+        if (exists) {
+          M.toast({html: 'Connection already exists'});
           return;
         }
-
-        // Handle drag start
-        function handleDragStart(e) {
-          const varElement = e.target.closest(".variable");
-          if (!varElement) return;
-
-          draggingVariable = varElement;
-          isDragging = true;
-
-          // Calculate offset
-          const rect = varElement.getBoundingClientRect();
-          offsetX = e.clientX - rect.left;
-          offsetY = e.clientY - rect.top;
-
-          // Show trash zone
-          trashZone.classList.add("visible");
-
-          // Add event listeners for drag
-          document.addEventListener("mousemove", handleDrag);
-          document.addEventListener("touchmove", handleTouchDrag, {
-            passive: false,
+        
+        // Create the connection
+        const connection = {
+          id: 'conn-' + Date.now(),
+          source: sourceId,
+          target: targetId
+        };
+        
+        connections.push(connection);
+        drawConnection(connection);
+        
+        M.toast({html: 'Connection created'});
+      }
+      
+      // Draw a connection line
+      function drawConnection(connection) {
+        const sourceEl = document.getElementById(connection.source);
+        const targetEl = document.getElementById(connection.target);
+        
+        if (!sourceEl || !targetEl) {
+          console.error('Source or target element not found:', connection.source, connection.target);
+          return;
+        }
+        
+        // Check if connection element already exists
+        let lineEl = document.getElementById('line-' + connection.id);
+        let arrowEl = document.getElementById('arrow-' + connection.id);
+        
+        if (!lineEl) {
+          lineEl = document.createElement('div');
+          lineEl.className = 'connector-line';
+          lineEl.id = 'line-' + connection.id;
+          lineEl.dataset.sourceId = connection.source;
+          lineEl.dataset.targetId = connection.target;
+          
+          // Add remove on double click
+          lineEl.addEventListener('dblclick', function() {
+            removeConnection(connection.id);
           });
-          document.addEventListener("mouseup", handleDragEnd);
-          document.addEventListener("touchend", handleDragEnd);
+          
+          canvas.appendChild(lineEl);
         }
-
-        // Handle drag
-        function handleDrag(e) {
-          if (!isDragging || !draggingVariable) return;
-
-          const canvasRect = canvas.getBoundingClientRect();
-          let x = (e.clientX - canvasRect.left - offsetX) / scale;
-          let y = (e.clientY - canvasRect.top - offsetY) / scale;
-
-          // Keep variable within canvas
-          x = Math.max(
-            0,
-            Math.min(
-              canvas.clientWidth / scale - draggingVariable.offsetWidth,
-              x
-            )
-          );
-          y = Math.max(
-            0,
-            Math.min(
-              canvas.clientHeight / scale - draggingVariable.offsetHeight,
-              y
-            )
-          );
-
-          draggingVariable.style.left = x + "px";
-          draggingVariable.style.top = y + "px";
-
-          // Update connections
-          updateConnections();
-
-          // Check if over trash zone
-          const trashRect = trashZone.getBoundingClientRect();
-          if (e.clientY > trashRect.top) {
-            trashZone.style.backgroundColor = "rgba(244, 67, 54, 0.2)";
-          } else {
-            trashZone.style.backgroundColor = "rgba(244, 67, 54, 0.1)";
-          }
+        
+        if (!arrowEl) {
+          arrowEl = document.createElement('div');
+          arrowEl.className = 'arrow-head';
+          arrowEl.id = 'arrow-' + connection.id;
+          canvas.appendChild(arrowEl);
         }
-
-        // Handle touch drag
-        function handleTouchDrag(e) {
-          e.preventDefault();
-          const touch = e.touches[0];
-          handleDrag({ clientX: touch.clientX, clientY: touch.clientY });
-        }
-
-        // Handle drag end
-        function handleDragEnd(e) {
-          if (isDragging && draggingVariable) {
-            // Check if dropped on trash zone
-            if (e.type !== "touchend") {
-              const trashRect = trashZone.getBoundingClientRect();
-              if (e.clientY > trashRect.top) {
-                removeVariable(draggingVariable.id);
-              }
-            }
-          }
-
-          isDragging = false;
-          draggingVariable = null;
-
-          // Hide trash zone
-          trashZone.classList.remove("visible");
-          trashZone.style.backgroundColor = "rgba(244, 67, 54, 0.1)";
-
-          // Remove event listeners
-          document.removeEventListener("mousemove", handleDrag);
-          document.removeEventListener("touchmove", handleTouchDrag);
-          document.removeEventListener("mouseup", handleDragEnd);
-          document.removeEventListener("touchend", handleDragEnd);
-        }
-
-        // Add click event to canvas for connection mode
-        canvas.addEventListener("click", function (e) {
-          if (!connectionMode) return;
-
-          const varElement = e.target.closest(".variable");
-
-          if (varElement) {
-            if (!selectedVariable) {
-              // First variable click
-              selectedVariable = varElement;
-              selectedVariable.classList.add("pulse");
-              console.log("First variable selected:", selectedVariable.id);
-            } else if (varElement !== selectedVariable) {
-              // Second variable click - create connection
-              console.log(
-                "Creating connection:",
-                selectedVariable.id,
-                "to",
-                varElement.id
-              );
-              createConnection(selectedVariable.id, varElement.id);
-
-              // Reset selected variable
-              selectedVariable.classList.remove("pulse");
-              selectedVariable = null;
-            }
+        
+        console.log('Drawing connection between:', connection.source, 'and', connection.target);
+        
+        // Calculate positions
+        updateConnectionPosition(connection, sourceEl, targetEl, lineEl, arrowEl);
+      }
+      
+      // Update connection position
+      function updateConnectionPosition(connection, sourceEl, targetEl, lineEl, arrowEl) {
+        const sourceRect = sourceEl.getBoundingClientRect();
+        const targetRect = targetEl.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+        
+        // Calculate center points
+        const sourceX = (sourceRect.left + sourceRect.width / 2) - canvasRect.left;
+        const sourceY = (sourceRect.top + sourceRect.height / 2) - canvasRect.top;
+        const targetX = (targetRect.left + targetRect.width / 2) - canvasRect.left;
+        const targetY = (targetRect.top + targetRect.height / 2) - canvasRect.top;
+        
+        // Calculate distance and angle
+        const dx = targetX - sourceX;
+        const dy = targetY - sourceY;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+        
+        // Position line
+        lineEl.style.width = length + 'px';
+        lineEl.style.left = sourceX + 'px';
+        lineEl.style.top = sourceY + 'px';
+        lineEl.style.transform = `rotate(${angle}deg)`;
+        
+        // Position arrow head
+        arrowEl.style.left = (targetX - 7) + 'px';
+        arrowEl.style.top = (targetY - 5) + 'px';
+        arrowEl.style.transform = `rotate(${angle}deg)`;
+        arrowEl.style.borderWidth = '5px 0 5px 7px';
+        arrowEl.style.borderColor = 'transparent transparent transparent #333';
+      }
+      
+      // Update all connections
+      function updateConnections() {
+        connections.forEach(conn => {
+          const sourceEl = document.getElementById(conn.source);
+          const targetEl = document.getElementById(conn.target);
+          const lineEl = document.getElementById('line-' + conn.id);
+          const arrowEl = document.getElementById('arrow-' + conn.id);
+          
+          if (sourceEl && targetEl && lineEl && arrowEl) {
+            updateConnectionPosition(conn, sourceEl, targetEl, lineEl, arrowEl);
           }
         });
-
-        // Create connection between two variables
-        function createConnection(sourceId, targetId) {
-          // Check if connection already exists
-          const exists = connections.some(
-            (conn) =>
-              (conn.source === sourceId && conn.target === targetId) ||
-              (conn.source === targetId && conn.target === sourceId)
-          );
-
-          if (exists) {
-            M.toast({ html: "Connection already exists" });
-            return;
-          }
-
-          // Create the connection
-          const connection = {
-            id: "conn-" + Date.now(),
-            source: sourceId,
-            target: targetId,
-          };
-
-          connections.push(connection);
-          drawConnection(connection);
-
-          M.toast({ html: "Connection created" });
+      }
+      
+      // Remove a connection
+      function removeConnection(connectionId) {
+        const connIndex = connections.findIndex(conn => conn.id === connectionId);
+        if (connIndex !== -1) {
+          connections.splice(connIndex, 1);
+          
+          // Remove DOM elements
+          const lineEl = document.getElementById('line-' + connectionId);
+          const arrowEl = document.getElementById('arrow-' + connectionId);
+          
+          if (lineEl) lineEl.remove();
+          if (arrowEl) arrowEl.remove();
+          
+          M.toast({html: 'Connection removed'});
         }
-
-        // Draw a connection line
-        function drawConnection(connection) {
-          const sourceEl = document.getElementById(connection.source);
-          const targetEl = document.getElementById(connection.target);
-
-          if (!sourceEl || !targetEl) {
-            console.error(
-              "Source or target element not found:",
-              connection.source,
-              connection.target
-            );
-            return;
-          }
-
-          // Check if connection element already exists
-          let lineEl = document.getElementById("line-" + connection.id);
-          let arrowEl = document.getElementById("arrow-" + connection.id);
-
-          if (!lineEl) {
-            lineEl = document.createElement("div");
-            lineEl.className = "connector-line";
-            lineEl.id = "line-" + connection.id;
-            lineEl.dataset.sourceId = connection.source;
-            lineEl.dataset.targetId = connection.target;
-
-            // Add remove on double click
-            lineEl.addEventListener("dblclick", function () {
-              removeConnection(connection.id);
-            });
-
-            canvas.appendChild(lineEl);
-          }
-
-          if (!arrowEl) {
-            arrowEl = document.createElement("div");
-            arrowEl.className = "arrow-head";
-            arrowEl.id = "arrow-" + connection.id;
-            canvas.appendChild(arrowEl);
-          }
-
-          console.log(
-            "Drawing connection between:",
-            connection.source,
-            "and",
-            connection.target
+      }
+      
+      // Remove a variable and its connections
+      function removeVariable(variableId) {
+        // Remove variable from array
+        const varIndex = variables.findIndex(v => v.id === variableId);
+        if (varIndex !== -1) {
+          variables.splice(varIndex, 1);
+          
+          // Remove DOM element
+          const varEl = document.getElementById(variableId);
+          if (varEl) varEl.remove();
+          
+          // Remove related connections
+          const connToRemove = connections.filter(conn => 
+            conn.source === variableId || conn.target === variableId
           );
-
-          // Calculate positions
-          updateConnectionPosition(
-            connection,
-            sourceEl,
-            targetEl,
-            lineEl,
-            arrowEl
-          );
-        }
-
-        // Update connection position
-        function updateConnectionPosition(
-          connection,
-          sourceEl,
-          targetEl,
-          lineEl,
-          arrowEl
-        ) {
-          const sourceRect = sourceEl.getBoundingClientRect();
-          const targetRect = targetEl.getBoundingClientRect();
-          const canvasRect = canvas.getBoundingClientRect();
-
-          // Calculate center points
-          const sourceX =
-            sourceRect.left + sourceRect.width / 2 - canvasRect.left;
-          const sourceY =
-            sourceRect.top + sourceRect.height / 2 - canvasRect.top;
-          const targetX =
-            targetRect.left + targetRect.width / 2 - canvasRect.left;
-          const targetY =
-            targetRect.top + targetRect.height / 2 - canvasRect.top;
-
-          // Calculate distance and angle
-          const dx = targetX - sourceX;
-          const dy = targetY - sourceY;
-          const length = Math.sqrt(dx * dx + dy * dy);
-          const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-
-          // Position line
-          lineEl.style.width = length + "px";
-          lineEl.style.left = sourceX + "px";
-          lineEl.style.top = sourceY + "px";
-          lineEl.style.transform = `rotate(${angle}deg)`;
-
-          // Position arrow head
-          arrowEl.style.left = targetX - 7 + "px";
-          arrowEl.style.top = targetY - 5 + "px";
-          arrowEl.style.transform = `rotate(${angle}deg)`;
-          arrowEl.style.borderWidth = "5px 0 5px 7px";
-          arrowEl.style.borderColor =
-            "transparent transparent transparent #333";
-        }
-
-        // Update all connections
-        function updateConnections() {
-          connections.forEach((conn) => {
-            const sourceEl = document.getElementById(conn.source);
-            const targetEl = document.getElementById(conn.target);
-            const lineEl = document.getElementById("line-" + conn.id);
-            const arrowEl = document.getElementById("arrow-" + conn.id);
-
-            if (sourceEl && targetEl && lineEl && arrowEl) {
-              updateConnectionPosition(
-                conn,
-                sourceEl,
-                targetEl,
-                lineEl,
-                arrowEl
-              );
-            }
+          
+          connToRemove.forEach(conn => {
+            removeConnection(conn.id);
           });
+          
+          M.toast({html: 'Variable removed'});
         }
-
-        // Remove a connection
-        function removeConnection(connectionId) {
-          const connIndex = connections.findIndex(
-            (conn) => conn.id === connectionId
-          );
-          if (connIndex !== -1) {
-            connections.splice(connIndex, 1);
-
-            // Remove DOM elements
-            const lineEl = document.getElementById("line-" + connectionId);
-            const arrowEl = document.getElementById("arrow-" + connectionId);
-
+      }
+      
+      // Toggle connection mode
+      toggleConnectModeBtn.addEventListener('click', function() {
+        connectionMode = !connectionMode;
+        
+        if (connectionMode) {
+          canvas.classList.add('connection-mode');
+          this.classList.add('red');
+          this.classList.remove('blue');
+          M.toast({html: 'Connection mode: ON. Click on two variables to connect them.'});
+          
+          // Add cursor style to indicate connection mode
+          canvas.style.cursor = 'crosshair';
+        } else {
+          canvas.classList.remove('connection-mode');
+          this.classList.add('blue');
+          this.classList.remove('red');
+          M.toast({html: 'Connection mode: OFF'});
+          
+          // Reset cursor style
+          canvas.style.cursor = 'default';
+          
+          // Reset selected variable if any
+          if (selectedVariable) {
+            selectedVariable.classList.remove('pulse');
+            selectedVariable = null;
+          }
+        }
+      });
+      
+      // Clear canvas
+      clearCanvasBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear the canvas?')) {
+          variables.forEach(variable => {
+            const varEl = document.getElementById(variable.id);
+            if (varEl) varEl.remove();
+          });
+          
+          connections.forEach(conn => {
+            const lineEl = document.getElementById('line-' + conn.id);
+            const arrowEl = document.getElementById('arrow-' + conn.id);
             if (lineEl) lineEl.remove();
             if (arrowEl) arrowEl.remove();
-
-            M.toast({ html: "Connection removed" });
-          }
-        }
-
-        // Remove a variable and its connections
-        function removeVariable(variableId) {
-          // Remove variable from array
-          const varIndex = variables.findIndex((v) => v.id === variableId);
-          if (varIndex !== -1) {
-            variables.splice(varIndex, 1);
-
-            // Remove DOM element
-            const varEl = document.getElementById(variableId);
-            if (varEl) varEl.remove();
-
-            // Remove related connections
-            const connToRemove = connections.filter(
-              (conn) => conn.source === variableId || conn.target === variableId
-            );
-
-            connToRemove.forEach((conn) => {
-              removeConnection(conn.id);
-            });
-
-            M.toast({ html: "Variable removed" });
-          }
-        }
-
-        // Toggle connection mode
-        toggleConnectModeBtn.addEventListener("click", function () {
-          connectionMode = !connectionMode;
-
-          if (connectionMode) {
-            canvas.classList.add("connection-mode");
-            this.classList.add("red");
-            this.classList.remove("blue");
-            M.toast({
-              html: "Connection mode: ON. Click on two variables to connect them.",
-            });
-
-            // Add cursor style to indicate connection mode
-            canvas.style.cursor = "crosshair";
-          } else {
-            canvas.classList.remove("connection-mode");
-            this.classList.add("blue");
-            this.classList.remove("red");
-            M.toast({ html: "Connection mode: OFF" });
-
-            // Reset cursor style
-            canvas.style.cursor = "default";
-
-            // Reset selected variable if any
-            if (selectedVariable) {
-              selectedVariable.classList.remove("pulse");
-              selectedVariable = null;
-            }
-          }
-        });
-
-        // Clear canvas
-        clearCanvasBtn.addEventListener("click", function () {
-          if (confirm("Are you sure you want to clear the canvas?")) {
-            variables.forEach((variable) => {
-              const varEl = document.getElementById(variable.id);
-              if (varEl) varEl.remove();
-            });
-
-            connections.forEach((conn) => {
-              const lineEl = document.getElementById("line-" + conn.id);
-              const arrowEl = document.getElementById("arrow-" + conn.id);
-              if (lineEl) lineEl.remove();
-              if (arrowEl) arrowEl.remove();
-            });
-
-            variables = [];
-            connections = [];
-
-            M.toast({ html: "Canvas cleared" });
-          }
-        });
-
-        // Save model
-        saveBtn.addEventListener("click", function () {
-          const modelData = {
-            variables: variables.map((v) => ({
-              id: v.id,
-              name: v.element.querySelector("h6").textContent,
-              type: v.type,
-              color: v.color,
-              strength: v.strength,
-              left: parseFloat(v.element.style.left),
-              top: parseFloat(v.element.style.top),
-              minimized: v.element.classList.contains("minimized"),
-            })),
-            connections: connections.map((c) => ({
-              id: c.id,
-              source: c.source,
-              target: c.target,
-            })),
-          };
-
-          const dataStr = JSON.stringify(modelData, null, 2);
-          const dataUri =
-            "data:application/json;charset=utf-8," +
-            encodeURIComponent(dataStr);
-
-          const exportName =
-            "research-model-" + new Date().toISOString().slice(0, 10) + ".json";
-
-          const linkElement = document.createElement("a");
-          linkElement.setAttribute("href", dataUri);
-          linkElement.setAttribute("download", exportName);
-          linkElement.click();
-
-          M.toast({ html: "Model saved" });
-        });
-
-        // Load model
-        loadBtn.addEventListener("click", function () {
-          loadInput.click();
-        });
-
-        loadInput.addEventListener("change", function (e) {
-          const file = e.target.files[0];
-          if (!file) return;
-
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            try {
-              // Clear current canvas
-              clearCanvas();
-
-              const modelData = JSON.parse(e.target.result);
-
-              // Add variables
-              modelData.variables.forEach((v) => {
-                const varEl = addVariable(v.name, v.type, v.color, v.strength);
-                varEl.style.left = v.left + "px";
-                varEl.style.top = v.top + "px";
-
-                if (v.minimized) {
-                  varEl.classList.add("minimized");
-                }
-              });
-
-              // Add connections
-              modelData.connections.forEach((c) => {
-                createConnection(c.source, c.target);
-              });
-
-              M.toast({ html: "Model loaded" });
-            } catch (error) {
-              console.error(error);
-              M.toast({ html: "Error loading model file" });
-            }
-          };
-
-          reader.readAsText(file);
-          this.value = null; // Reset input
-        });
-
-        // Export as PNG
-        exportBtn.addEventListener("click", function () {
-          // Use html2canvas library to export
-          if (typeof html2canvas === "undefined") {
-            // Load html2canvas dynamically if not available
-            const script = document.createElement("script");
-            script.src =
-              "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-            script.onload = captureCanvas;
-            document.head.appendChild(script);
-          } else {
-            captureCanvas();
-          }
-
-          function captureCanvas() {
-            M.toast({ html: "Generating image..." });
-
-            // Temporarily remove zoom scale for clean capture
-            const originalTransform = canvas.style.transform;
-            canvas.style.transform = "none";
-
-            html2canvas(canvas, {
-              backgroundColor: "#ffffff",
-              scale: 2,
-              logging: false,
-            })
-              .then(function (canvas) {
-                const dataUrl = canvas.toDataURL("image/png");
-                const exportName =
-                  "research-model-" +
-                  new Date().toISOString().slice(0, 10) +
-                  ".png";
-
-                const linkElement = document.createElement("a");
-                linkElement.setAttribute("href", dataUrl);
-                linkElement.setAttribute("download", exportName);
-                linkElement.click();
-
-                // Restore zoom
-                canvas.style.transform = originalTransform;
-
-                M.toast({ html: "PNG exported" });
-              })
-              .catch(function (error) {
-                console.error(error);
-                M.toast({ html: "Error exporting image" });
-                canvas.style.transform = originalTransform;
-              });
-          }
-        });
-
-        // Clear canvas helper function
-        function clearCanvas() {
-          document
-            .querySelectorAll(".variable, .connector-line, .arrow-head")
-            .forEach((el) => {
-              el.remove();
-            });
-
+          });
+          
           variables = [];
           connections = [];
+          
+          M.toast({html: 'Canvas cleared'});
         }
-
-        // Zoom controls
-        zoomInBtn.addEventListener("click", function () {
-          scale = Math.min(scale + 0.1, 2);
-          applyZoom();
-        });
-
-        zoomOutBtn.addEventListener("click", function () {
-          scale = Math.max(scale - 0.1, 0.5);
-          applyZoom();
-        });
-
-        zoomResetBtn.addEventListener("click", function () {
-          scale = 1;
-          applyZoom();
-        });
-
-        function applyZoom() {
-          canvas.style.transform = `scale(${scale})`;
-          canvas.style.transformOrigin = "top left";
-        }
-
-        // Create tooltip
-        function createTooltip() {
-          if (!tooltip) {
-            tooltip = document.createElement("div");
-            tooltip.className = "tooltip";
-            document.body.appendChild(tooltip);
-          }
-          return tooltip;
-        }
-
-        // Handle mouse over connections to show info
-        canvas.addEventListener("mouseover", function (e) {
-          const lineEl = e.target.closest(".connector-line");
-          if (lineEl) {
-            const sourceId = lineEl.dataset.sourceId;
-            const targetId = lineEl.dataset.targetId;
-
-            const sourceVar = variables.find((v) => v.id === sourceId);
-            const targetVar = variables.find((v) => v.id === targetId);
-
-            if (sourceVar && targetVar) {
-              const tooltip = createTooltip();
-              const sourceName =
-                sourceVar.element.querySelector("h6").textContent;
-              const targetName =
-                targetVar.element.querySelector("h6").textContent;
-
-              tooltip.textContent = `${sourceName} → ${targetName}`;
-              tooltip.style.display = "block";
-              tooltip.style.left = e.clientX + 10 + "px";
-              tooltip.style.top = e.clientY + 10 + "px";
-            }
-          }
-        });
-
-        canvas.addEventListener("mouseout", function (e) {
-          if (e.target.closest(".connector-line") && tooltip) {
-            tooltip.style.display = "none";
-          }
-        });
-
-        canvas.addEventListener("mousemove", function (e) {
-          if (
-            e.target.closest(".connector-line") &&
-            tooltip &&
-            tooltip.style.display === "block"
-          ) {
-            tooltip.style.left = e.clientX + 10 + "px";
-            tooltip.style.top = e.clientY + 10 + "px";
-          }
-        });
-
-        // Helper function to get contrast color (black or white) based on background
-        function getContrastColor(hexColor) {
-          // Convert hex to RGB
-          const r = parseInt(hexColor.substr(1, 2), 16);
-          const g = parseInt(hexColor.substr(3, 2), 16);
-          const b = parseInt(hexColor.substr(5, 2), 16);
-
-          // Calculate luminance
-          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-          return luminance > 0.5 ? "#000000" : "#ffffff";
-        }
-
-        // Helper function to adjust color lightness/darkness
-        function adjustColor(hexColor, amount) {
-          // Convert hex to RGB
-          let r = parseInt(hexColor.substr(1, 2), 16);
-          let g = parseInt(hexColor.substr(3, 2), 16);
-          let b = parseInt(hexColor.substr(5, 2), 16);
-
-          // Adjust values
-          r = Math.max(0, Math.min(255, r + amount));
-          g = Math.max(0, Math.min(255, g + amount));
-          b = Math.max(0, Math.min(255, b + amount));
-
-          // Convert back to hex
-          return `#${((1 << 24) + (r << 16) + (g << 8) + b)
-            .toString(16)
-            .slice(1)}`;
-        }
-
-        // Handle window resize
-        window.addEventListener("resize", function () {
-          updateConnections();
-        });
-
-        // Initial toast message
-        setTimeout(function () {
-          M.toast({
-            html: "Welcome to Research Model Builder! Add variables and connect them to create your research model.",
-          });
-          // Show a toast about moderator strength adjustment
-          setTimeout(function () {
-            M.toast({
-              html: "Double-click or right-click on a moderator to adjust its strength!",
-              displayLength: 5000,
-            });
-          }, 2000);
-        }, 1000);
       });
-    </script>
-  </body>
+      
+      // Save model
+      saveBtn.addEventListener('click', function() {
+        const modelData = {
+          variables: variables.map(v => ({
+            id: v.id,
+            name: v.element.querySelector('h6').textContent,
+            type: v.type,
+            color: v.color,
+            strength: v.strength,
+            left: parseFloat(v.element.style.left),
+            top: parseFloat(v.element.style.top),
+            minimized: v.element.classList.contains('minimized')
+          })),
+          connections: connections.map(c => ({
+            id: c.id,
+            source: c.source,
+            target: c.target
+          }))
+        };
+        
+        const dataStr = JSON.stringify(modelData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        
+        const exportName = 'research-model-' + new Date().toISOString().slice(0, 10) + '.json';
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportName);
+        linkElement.click();
+        
+        M.toast({html: 'Model saved'});
+      });
+      
+      // Load model
+      loadBtn.addEventListener('click', function() {
+        loadInput.click();
+      });
+      
+      loadInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            // Clear current canvas
+            clearCanvas();
+            
+            const modelData = JSON.parse(e.target.result);
+            
+            // Add variables
+            modelData.variables.forEach(v => {
+              const varEl = addVariable(v.name, v.type, v.color, v.strength);
+              varEl.style.left = v.left + 'px';
+              varEl.style.top = v.top + 'px';
+              
+              if (v.minimized) {
+                varEl.classList.add('minimized');
+              }
+            });
+            
+            // Add connections
+            modelData.connections.forEach(c => {
+              createConnection(c.source, c.target);
+            });
+            
+            M.toast({html: 'Model loaded'});
+          } catch (error) {
+            console.error(error);
+            M.toast({html: 'Error loading model file'});
+          }
+        };
+        
+        reader.readAsText(file);
+        this.value = null; // Reset input
+      });
+      
+      // Export as PNG
+      exportBtn.addEventListener('click', function() {
+        // Use html2canvas library to export
+        if (typeof html2canvas === 'undefined') {
+          // Load html2canvas dynamically if not available
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+          script.onload = captureCanvas;
+          document.head.appendChild(script);
+        } else {
+          captureCanvas();
+        }
+        
+        function captureCanvas() {
+          M.toast({html: 'Generating image...'});
+          
+          // Temporarily remove zoom scale for clean capture
+          const originalTransform = canvas.style.transform;
+          canvas.style.transform = 'none';
+          
+          html2canvas(canvas, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            logging: false
+          }).then(function(canvas) {
+            const dataUrl = canvas.toDataURL('image/png');
+            const exportName = 'research-model-' + new Date().toISOString().slice(0, 10) + '.png';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUrl);
+            linkElement.setAttribute('download', exportName);
+            linkElement.click();
+            
+            // Restore zoom
+            canvas.style.transform = originalTransform;
+            
+            M.toast({html: 'PNG exported'});
+          }).catch(function(error) {
+            console.error(error);
+            M.toast({html: 'Error exporting image'});
+            canvas.style.transform = originalTransform;
+          });
+        }
+      });
+      
+      // Clear canvas helper function
+      function clearCanvas() {
+        document.querySelectorAll('.variable, .connector-line, .arrow-head').forEach(el => {
+          el.remove();
+        });
+        
+        variables = [];
+        connections = [];
+      }
+      
+      // Zoom controls
+      zoomInBtn.addEventListener('click', function() {
+        scale = Math.min(scale + 0.1, 2);
+        applyZoom();
+      });
+      
+      zoomOutBtn.addEventListener('click', function() {
+        scale = Math.max(scale - 0.1, 0.5);
+        applyZoom();
+      });
+      
+      zoomResetBtn.addEventListener('click', function() {
+        scale = 1;
+        applyZoom();
+      });
+      
+      function applyZoom() {
+        canvas.style.transform = `scale(${scale})`;
+        canvas.style.transformOrigin = 'top left';
+      }
+      
+      // Create tooltip
+      function createTooltip() {
+        if (!tooltip) {
+          tooltip = document.createElement('div');
+          tooltip.className = 'tooltip';
+          document.body.appendChild(tooltip);
+        }
+        return tooltip;
+      }
+      
+      // Handle mouse over connections to show info
+      canvas.addEventListener('mouseover', function(e) {
+        const lineEl = e.target.closest('.connector-line');
+        if (lineEl) {
+          const sourceId = lineEl.dataset.sourceId;
+          const targetId = lineEl.dataset.targetId;
+          
+          const sourceVar = variables.find(v => v.id === sourceId);
+          const targetVar = variables.find(v => v.id === targetId);
+          
+          if (sourceVar && targetVar) {
+            const tooltip = createTooltip();
+            const sourceName = sourceVar.element.querySelector('h6').textContent;
+            const targetName = targetVar.element.querySelector('h6').textContent;
+            
+            tooltip.textContent = `${sourceName} → ${targetName}`;
+            tooltip.style.display = 'block';
+            tooltip.style.left = (e.clientX + 10) + 'px';
+            tooltip.style.top = (e.clientY + 10) + 'px';
+          }
+        }
+      });
+      
+      canvas.addEventListener('mouseout', function(e) {
+        if (e.target.closest('.connector-line') && tooltip) {
+          tooltip.style.display = 'none';
+        }
+      });
+      
+      canvas.addEventListener('mousemove', function(e) {
+        if (e.target.closest('.connector-line') && tooltip && tooltip.style.display === 'block') {
+          tooltip.style.left = (e.clientX + 10) + 'px';
+          tooltip.style.top = (e.clientY + 10) + 'px';
+        }
+      });
+      
+      // Helper function to get contrast color (black or white) based on background
+      function getContrastColor(hexColor) {
+        // Convert hex to RGB
+        const r = parseInt(hexColor.substr(1, 2), 16);
+        const g = parseInt(hexColor.substr(3, 2), 16);
+        const b = parseInt(hexColor.substr(5, 2), 16);
+        
+        // Calculate luminance
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        return luminance > 0.5 ? '#000000' : '#ffffff';
+      }
+      
+      // Helper function to adjust color lightness/darkness
+      function adjustColor(hexColor, amount) {
+        // Convert hex to RGB
+        let r = parseInt(hexColor.substr(1, 2), 16);
+        let g = parseInt(hexColor.substr(3, 2), 16);
+        let b = parseInt(hexColor.substr(5, 2), 16);
+        
+        // Adjust values
+        r = Math.max(0, Math.min(255, r + amount));
+        g = Math.max(0, Math.min(255, g + amount));
+        b = Math.max(0, Math.min(255, b + amount));
+        
+        // Convert back to hex
+        return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+      }
+      
+      // Handle window resize
+      window.addEventListener('resize', function() {
+        updateConnections();
+      });
+      
+      // GitHub Documentation button
+      document.getElementById('github-btn').addEventListener('click', function() {
+        window.open('https://github.com/businessdatasolutions/conceptual-model', '_blank');
+      });
+      
+      // Initial toast message
+      setTimeout(function() {
+        M.toast({html: 'Welcome to Research Model Builder! Add variables and connect them to create your research model.'});
+        // Show a toast about moderator strength adjustment
+        setTimeout(function() {
+          M.toast({html: 'Double-click or right-click on a moderator to adjust its strength!', displayLength: 5000});
+        }, 2000);
+      }, 1000);
+    });
+  </script>
+</body>
 </html>
